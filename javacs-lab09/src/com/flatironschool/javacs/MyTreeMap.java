@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.flatironschool.javacs;
 
@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * Implementation of a Map using a binary search tree.
- * 
+ *
  * @param <K>
  * @param <V>
  *
@@ -32,7 +32,7 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 		public V value;
 		public Node left = null;
 		public Node right = null;
-		
+
 		/**
 		 * @param key
 		 * @param value
@@ -43,8 +43,25 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 			this.key = key;
 			this.value = value;
 		}
+
+		public K getKey() {
+			return this.key;
+		}
+
+		public V getValue() {
+			return this.value;
+		}
+
+		public boolean isLeaf() {
+			if (this.left == null && this.right == null) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
 	}
-		
+
 	@Override
 	public void clear() {
 		size = 0;
@@ -57,28 +74,38 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 	}
 
 	/**
-	 * Returns the entry that contains the target key, or null if there is none. 
-	 * 
+	 * Returns the entry that contains the target key, or null if there is none.
+	 *
 	 * @param target
 	 */
 	private Node findNode(Object target) {
 		// some implementations can handle null as a key, but not this one
 		if (target == null) {
-            throw new NullPointerException();
-	    }
-		
+      throw new NullPointerException();
+	  }
+
 		// something to make the compiler happy
 		@SuppressWarnings("unchecked")
 		Comparable<? super K> k = (Comparable<? super K>) target;
-		
+
 		// the actual search
-        // TODO: Fill this in.
-        return null;
+		Node current = this.root;
+		while (k.compareTo(current.getKey()) != 0) {
+			if (k.compareTo(current.getKey()) < 0 && current.left != null) {
+				current = current.left;
+			} else if (k.compareTo(current.getKey()) > 0 && current.right != null) {
+				current = current.right;
+			} else if (current.right == null || current.left == null) {
+				return null;
+			}
+		}
+
+		return current;
 	}
 
 	/**
 	 * Compares two keys or two values, handling null correctly.
-	 * 
+	 *
 	 * @param target
 	 * @param obj
 	 * @return
@@ -92,6 +119,12 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	@Override
 	public boolean containsValue(Object target) {
+		Collection<V> allValues = values();
+		for (V value: allValues) {
+			if (value.equals(target)) {
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -117,8 +150,29 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 	@Override
 	public Set<K> keySet() {
 		Set<K> set = new LinkedHashSet<K>();
-        // TODO: Fill this in.
+    addKeys(set, this.root);
 		return set;
+	}
+
+	/**
+	 * Helper method for keySet()
+	 */
+	public void addKeys(Set<K> set, Node current) {
+		if (current.isLeaf()) { //no subtrees
+			set.add(current.getKey());
+		} else if (current.left != null && current.right != null) { //both left and right subtrees
+			addKeys(set, current.left);
+			set.add(current.getKey());
+			addKeys(set, current.right);
+		} else if (current.left != null) { //only left subtree
+			addKeys(set, current.left);
+			set.add(current.getKey());
+		} else { //only right subtree
+			set.add(current.getKey());
+			addKeys(set, current.right);
+		}
+
+
 	}
 
 	@Override
@@ -135,8 +189,35 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 	}
 
 	private V putHelper(Node node, K key, V value) {
-        // TODO: Fill this in.
-        return null;
+				//Check if key exists already
+				Node optional = findNode(key);
+				if (optional != null) {
+					V oldValue = optional.value;
+					optional.value = value;
+					return oldValue;
+				}
+
+				//Otherwise, traverse the tree...
+        Node current = node;
+				Comparable<? super K> k = (Comparable<? super K>) key;
+				while (current != null) {
+					if (k.compareTo(current.getKey()) < 0) {
+						if (current.left == null) {
+							current.left = new Node(key, value);
+							break;
+						}
+						current = current.left;
+					} else if (k.compareTo(current.getKey()) > 0) {
+						if (current.right == null) {
+							current.right = new Node(key, value);
+							break;
+						}
+						current = current.right;
+					}
+				}
+
+				this.size++;
+				return null;
 	}
 
 	@Override
@@ -170,27 +251,44 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 		}
 		return set;
 	}
-	
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Map<String, Integer> map = new MyTreeMap<String, Integer>();
-		map.put("Word1", 1);
-		map.put("Word2", 2);
-		Integer value = map.get("Word1");
-		System.out.println(value);
-		
-		for (String key: map.keySet()) {
-			System.out.println(key + ", " + map.get(key));
-		}
+
+		MyTreeMap<String, Integer> map = new MyTreeMap<String, Integer>();
+		MyTreeMap<String, Integer>.Node node08 = map.makeNode("08", 8);
+
+		MyTreeMap<String, Integer>.Node node03 = map.makeNode("03", 3);
+		MyTreeMap<String, Integer>.Node node10 = map.makeNode("10", 10);
+		node08.left = node03;
+		node08.right = node10;
+
+		MyTreeMap<String, Integer>.Node node01 = map.makeNode("01", 1);
+		MyTreeMap<String, Integer>.Node node06 = map.makeNode("06", 6);
+		MyTreeMap<String, Integer>.Node node14 = map.makeNode("14", 14);
+		node03.left = node01;
+		node03.right = node06;
+		node10.right = node14;
+
+		MyTreeMap<String, Integer>.Node node04 = map.makeNode("04", 4);
+		MyTreeMap<String, Integer>.Node node07 = map.makeNode("07", 7);
+		MyTreeMap<String, Integer>.Node node13 = map.makeNode("13", 13);
+		node06.left = node04;
+		node06.right = node07;
+		node14.left = node13;
+
+		map.setTree(node08, 9);
+
+		map.put("05", 5);
 	}
 
 	/**
 	 * Makes a node.
-	 * 
+	 *
 	 * This is only here for testing purposes.  Should not be used otherwise.
-	 * 
+	 *
 	 * @param key
 	 * @param value
 	 * @return
@@ -201,9 +299,9 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	/**
 	 * Sets the instance variables.
-	 * 
+	 *
 	 * This is only here for testing purposes.  Should not be used otherwise.
-	 * 
+	 *
 	 * @param node
 	 * @param size
 	 */
@@ -214,9 +312,9 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	/**
 	 * Returns the height of the tree.
-	 * 
+	 *
 	 * This is only here for testing purposes.  Should not be used otherwise.
-	 * 
+	 *
 	 * @return
 	 */
 	public int height() {
